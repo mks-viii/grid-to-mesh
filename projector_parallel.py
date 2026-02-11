@@ -226,11 +226,12 @@ class Projector:
                     continue
 
                 # coordinate del punto da proiettare    
-                x, y, z = z_interpolated2[0][:3]
+                x= float(z_interpolated2[0][0])
+                y= float(z_interpolated2[0][1])
                 #x, y, _ = t_point
 
                 #punto proiettato
-                projected_point = np.array([x, y, z])
+                projected_point = np.array([x, y, z_value])
                 
                 filtered = self.filtro_piano_SYM(triangle, projected_point, normalGrid)
                 

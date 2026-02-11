@@ -243,7 +243,7 @@ class Projector:
                     
                     # 4e. INTERSEZIONE retta-piano (proiezione verticale) 
                     z_interpolated2 = self.intersezione_piano_retta_SYM(triangle, t_point, normalGrid)      
-      
+                    print(z_interpolated2)
                     # z_interpolated2[0] è un SymPy Matrix, devi estrarre il valore numerico
                     if z_interpolated2[2] == False or z_interpolated2[0] is None:
                         continue
@@ -254,9 +254,9 @@ class Projector:
                         continue
 
                     # coordinate del punto da proiettare    
-                    x, y, _ = t_point
-                    #x=z_value = float(z_interpolated2[0][0])
-                    #y=z_value = float(z_interpolated2[0][1])
+                    #x, y, _ = t_point
+                    x= float(z_interpolated2[0][0])
+                    y= float(z_interpolated2[0][1])
                     #punto proiettato
                     projected_point = np.array([x, y, z_value])
                     
