@@ -17,12 +17,12 @@ class Grid:
                         points.append([float(parts[-3]), float(parts[-2]), float(parts[-1])])
             self.pointsGrid = np.array(points)
         except Exception as e:
-            print(f"Errore durante la lettura del file XYZ: {e}")
+            print(f"Error reading XYZ file: {e}")
     
-    #ritorna i punti
+    #Return the points
     def getGrid(self):
         return self.pointsGrid
 
-    #ritorna il numero dei punti 
+    #Return the number of the points
     def getNGridPt(self):
         return len(self.pointsGrid)

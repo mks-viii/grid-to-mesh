@@ -8,7 +8,7 @@ from tqdm import tqdm
 from sympy import Matrix, sqrt
 
 class Projector:
-    def __init__(self, grid, vertices, faces, tolerance, buffer, radius, normal, centroids, output):
+    def __init__(self, grid, vertices, faces, tolerance, buffer, radius, normal, centroids, output, core):
         self.points = np.array(grid)
         self.mesh_vertices = vertices
         self.mesh_faces = faces
@@ -20,18 +20,18 @@ class Projector:
         self.kdtree = None
         self.build_kdtree()
         self.output=output
+        self.core=core
         print()
         print()
 
     def build_kdtree(self):
-        print("Costruzione KD-tree dei centroidi...")
+        print("Build the KD-tree of the centroids...")
         self.kdtree = cKDTree(self.centroids)
-        print(f"KD-tree costruito con {len(self.centroids)} punti")
+        print(f"KD-tree built using {len(self.centroids)} points")
 
     def is_point_in_triangle_barycentric_2D(self, point, triangle):
         """
-        Verifica se un punto è dentro un triangolo usando coordinate baricentriche in 2D
-        Molto più efficiente e accurato del metodo precedente
+        Check if a point is inside a triangle using 2D barycentric coordinates.
         """
         p = np.array([point[0], point[1]])
         v0 = np.array([triangle[0][0], triangle[0][1]])
@@ -50,19 +50,19 @@ class Projector:
 
         denom = dot00 * dot11 - dot01 * dot01
         
-        #controllo triangolo degenero di area 0
+        #Check for degenerate triangle with zero area
         if abs(denom) < 1e-10:
             return False
         
-        # Calcola coordinate baricentriche
+        #Compute the barycentric coordinates
         inv_denom = 1.0 / (dot00 * dot11 - dot01 * dot01)
         u = (dot11 * dot02 - dot01 * dot12) * inv_denom
         v = (dot00 * dot12 - dot01 * dot02) * inv_denom
         
-        # Verifica se il punto è nel triangolo usando la tolleranza al bordo
+        #Check if the point is inside the triangle using edge tolerance
         return (u >= -self.tolerance) and (v >= -self.tolerance) and (u + v <= 1.0 + self.tolerance)
 
-    #Funzione che trova il bounding box attorno alal griglia
+    # This function search for the bounding box around the grid 
     def compute_bounding_box(self):
         print()
         print("****************************************")
@@ -71,7 +71,7 @@ class Projector:
         print()
         print("Compute Bounding Grid")
         if self.points is None or len(self.points) == 0:
-           raise ValueError("Non ho punti per calcolare il bounding box.")
+           raise ValueError("I dont't have point for calulating the bounding box.")
         inner_point = np.array(self.points)
         min_coords = inner_point - self.buffer
         max_coords = inner_point + self.buffer
@@ -88,9 +88,8 @@ class Projector:
         max_coords = mypoint + self.radius
         return min_coords, max_coords
 
-    """
-    Filtra i triangoli usando il KD-tree pre-calcolato.
-    """
+    
+    #Filter the triangles using the pre-calculated KD-tree
     def filter_triangles(self, bbox_min, bbox_max):
         center = (bbox_min + bbox_max) / 2
         radius = np.linalg.norm(bbox_max - center) * 2
@@ -98,10 +97,10 @@ class Projector:
         return indices
 
     """
-    A, B, C: punti del piano 
-    point: punto della retta 
-    normalGrid: normale alla griglia 
-    tol: tolleranza numerica per verificare la vicinanza al piano
+    A, B, C: points of the plane
+    point: point for mthe line
+    normalGrid: normal to the grid  
+    tol: tolerance along the border
     """
     @staticmethod
     def intersezione_piano_retta_SYM(triangle, point, normalGrid, tol=1e-12):
@@ -109,27 +108,27 @@ class Projector:
         P0 = point
         v = normalGrid
 
-        # Converte input in oggetti simbolici di SymPy (Coordinata cartesiana 3D)
+        # Convert inputs to SymPy symbolic objects
         A = Matrix(A)
         B = Matrix(B)
         C = Matrix(C)
         P0 = Matrix(P0)
         v = Matrix(v)
 
-        # Calcolo dei vettori del piano
+        # Compute plane vectors
         AB = B - A
         AC = C - A
 
-        # Vettore normale al piano
+        # Plane vector
         n = AB.cross(AC)
-        # Normalizzo il vettore normale
+        # Normalized plane vectors
         n = n.normalized()
 
         denom = n.dot(v)
         if denom == 0:
             return None, None, False
 
-        # Parametro t che definisce la posizione lungo la retta
+        # T defines the position along the line 
         t = n.dot(A - P0) / denom
 
         def proietta_sul_piano(P, A, n):
@@ -137,12 +136,12 @@ class Projector:
             P_proj = P - dist * n
             return P_proj
         
-        # Punto di intersezione
+        # Intersection point
         P = P0 + t * v
 
-        # Cerca sul piano
+        # Search on the plane
         P = proietta_sul_piano(P, A, n)
-        # Verifica la distanza del punto dal pian
+        # Verify the distance between the point an the plane
         dist = abs(n.dot(P - A)) / sqrt(n.dot(n))
 
         if dist < tol:
@@ -153,33 +152,29 @@ class Projector:
     @staticmethod
     def filtro_piano_SYM(triangle, point, normalGrid, tol=1e-12):
         """
-        A, B, C: punti del piano 
-        point: punto della retta 
-        normalGrid: normale alla griglia 
-        tol: tolleranza numerica per verificare la vicinanza al piano
+        A, B, C: points of the plane
+        point: point for mthe line
+        normalGrid: normal to the grid  
+        tol: tolerance along the border
         """
         A, B, C = triangle
-        P0 = point
+        P = point
         v = normalGrid
 
         A = Matrix(A)
         B = Matrix(B)
         C = Matrix(C)
-        P0 = Matrix(P0)
-        v = Matrix(v)
+        P = Matrix(P)
 
-        # Calcolo dei vettori del piano
+        # Compute plane vetors
         AB = B - A
         AC = C - A
 
-        # Vettore normale al piano
+        # Normal vector
         n = AB.cross(AC)
-        n = n.normalized()
+        n = n.normalized()      
         
-        # Assicurati che P, i lpunto di intersezione, sia una Matrix
-        P = Matrix(point)
-        
-        # Verifica la distanza del punto dal piano (proiezione)
+        # Verify the distance between the projected point and the plane
         dist = abs(n.dot(P - A)) / sqrt(n.dot(n))
 
         if dist < tol:
@@ -194,43 +189,43 @@ class Projector:
         print("***********************************")
         print()
         
-        # Lista per accumulare i risultati invece del DataFrame
+        # List for collet the risults
         results_list = []
 
-        # 1 BB globale
-        print("Calcolo bounding box")
+        # 1 global BB 
+        print("Compute bounding box")
         obbox_min, obbox_max = self.compute_bounding_box()
         
-        print("Filtro triangoli rilevanti")
+        print("Filter relevant triangles")
         relevant_triangle_indices = self.filter_triangles(obbox_min, obbox_max)
 
-        # 2 PULIZIA DEGLI INDICI (appiattimento e conversione a int) - VETTORIZZATO
+        # 2 CLEANING OF THE INDICES (flat int cast) - VECTORIZATION
         flat_indices = [item for sublist in relevant_triangle_indices for item in (sublist if isinstance(sublist, (list, np.ndarray)) else [sublist])]
         relevant_triangle_indices = np.array(flat_indices, dtype=int)
 
-        # 3. ESTRAE LE FACCE RILEVANTI del BB globale
+        # 3. EXTRACT THE RELEVANT FACES INTO THE GLOBAL BB
         relevant_faces = self.mesh_faces[relevant_triangle_indices]
 
-        # 4. CICLO PER OGNI PUNTO CON BARRA DI PROGRESSO
-        print(f"\nProiezione di {len(self.points)} punti sulla mesh...")
+        # 4. CYCLE THROUGH EACH POINT WITH PROGRESSS BAR
+        print(f"\nProjection of {len(self.points)} points on the mesh...")
         
-        # Usa tqdm per mostrare la barra di progresso
+        # Use tqdm for the progress bar
         for index, t_point in enumerate(tqdm(self.points, 
                                               desc="Proiezione punti", 
                                               unit="pt",
                                               colour="green",
                                               ncols=100)):
            
-            # 4a. BB Locale il punto corrente
+            # 4a. LOCAL BB for the actual point
             point_bbox_min, point_bbox_max = self.compute_point_bounding_box(t_point)
 
-            # 4b.  ILTRA TRIANGOLI vicini al punto
+            # 4b. FILTER THE NEAREST triangles 
             relevant_triangle_to_point_indices = self.filter_triangles(point_bbox_min, point_bbox_max)
 
-            # 4c. indice globale
+            # 4c. GLOBAL INDICES
             nearest_indices = relevant_triangle_to_point_indices
 
-            # 4d. PER OGNI TRIANGOLO VICINO
+            # 4d. FOR EACH TRIANGKLE
             for local_index in nearest_indices:
                 if len(relevant_faces) == 0:
                     continue                                      
@@ -238,13 +233,13 @@ class Projector:
                 face = self.mesh_faces[local_index]
                 triangle = self.mesh_vertices[face]    
 
-                # Usa il nuovo metodo barycentric ottimizzato
+                # use the barycentric method 
                 if self.is_point_in_triangle_barycentric_2D(t_point, triangle): 
                     
-                    # 4e. INTERSEZIONE retta-piano (proiezione verticale) 
+                    # 4e. # Line-plane intersection (vertical projection)
                     z_interpolated2 = self.intersezione_piano_retta_SYM(triangle, t_point, normalGrid)      
                     print(z_interpolated2)
-                    # z_interpolated2[0] è un SymPy Matrix, devi estrarre il valore numerico
+                    # z_interpolated2[0] is SymPy Matrix, convert to number
                     if z_interpolated2[2] == False or z_interpolated2[0] is None:
                         continue
 
@@ -253,16 +248,17 @@ class Projector:
                     except (TypeError, IndexError, AttributeError):
                         continue
 
-                    # coordinate del punto da proiettare    
+                    # original coordinates  
                     #x, y, _ = t_point
                     x= float(z_interpolated2[0][0])
                     y= float(z_interpolated2[0][1])
-                    #punto proiettato
+                    # projected coordinates
                     projected_point = np.array([x, y, z_value])
                     
                     """
-                    Applica il filtro per trovare solo il punto che giace sul piano della faccia nadirale al punto considerato
-                    Evita la proiezione su piani di facce adiacenti                        
+                    Apply filter to find only the point lying on the plane of the face
+                    directly below the considered point.
+                    Avoids projection onto adjacent face planes.
                     """  
                     filtered = self.filtro_piano_SYM(triangle, projected_point, normalGrid)
                     
@@ -277,7 +273,7 @@ class Projector:
                     except (TypeError, IndexError, AttributeError):
                         continue
                     
-                    # append lista più veloce 
+                    # append list
                     results_list.append({
                         'east': est, 
                         'north': ovest, 
@@ -285,24 +281,24 @@ class Projector:
                         'soglia': soglia
                     })
 
-        print("\nCreo il DataFrame risultati.")
+        print("\nCreate the results dataframe")
         panda = pd.DataFrame(results_list)
 
         #controllo sul DF
         if panda.empty:
-            print("NESSUN PUNTO PROIETTATO!")
+            print("NO POINT PROJECTED!")
             return pd.DataFrame(), [], []       
 
-        print("Filtro i risultati ottimali.")
+        print("Filtered.")
 
         #qui raggruppo per coordiante uguali e filtro solo quello con la soglia minima
         panda_filtered = panda.loc[panda.groupby(['east', 'north'])['soglia'].idxmin()]    
         
         print()
         print("***********************************")
-        print("* PROIEZIONE COMPLETATA *")
+        print("* PROJECTION COMPLETED *")
         print("***********************************")
-        print(f"Punti proiettati: {len(panda_filtered)}")
+        print(f"Projected points: {len(panda_filtered)}")
         print()
 
         xyz_data = panda_filtered[['east', 'north', 'height']]
@@ -311,9 +307,9 @@ class Projector:
         output_dir = os.path.dirname(self.output)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
-            print(f"Creata directory di output: {output_dir}")
+            print(f"Output folder created: {output_dir}")
 
-        print(f"Salvataggio risultati in: {self.output}")
+        print(f"Output saved in: {self.output}")
         xyz_data.to_csv(self.output, index=False, header=False, sep=' ')
         
         return panda, [], []

@@ -21,12 +21,12 @@ class Mesh:
             faces = np.array([f[0] for f in plydata['face']])
             self.mesh_vertices, self.mesh_faces = vertices, faces
         except Exception as e:
-            print(f"Errore durante la lettura del file PLY: {e}")
+            print(f"Error reading PLY file: {e}")
 
     def precompute_centroids(self):
-        print("Pre-calcolo centroidi...")
+        print("Pre-computing centroids...")
         self.centroids = np.mean(self.mesh_vertices[self.mesh_faces], axis=1)
-        print(f"Calcolati {len(self.centroids)} centroidi")
+        print(f"Camputed {len(self.centroids)} centroids")
     
     def getCentroids(self):
         return self.centroids

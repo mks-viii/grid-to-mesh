@@ -290,6 +290,9 @@ class Projector:
                 ncols=100
             ))
 
+        print(f"Risultati prima dell'appiattimento: {len(results_list)}")
+        print(f"Lunghezze singole: {[len(r) if isinstance(r, list) else 1 for r in results_list[:5]]}")
+
         # Appiattisci i risultati
         results_list = [item for sublist in results_list for item in sublist]
 
