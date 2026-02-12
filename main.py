@@ -40,7 +40,7 @@ ilmiooutput = os.path.join(script_dir, outputFolder, output_name)
 
 lamiamesh = config.mesh_path
 imieipunti = config.point_path
-output_name = get_output_name(meshName)
+output_name = get_output_name(config.mesh_name)
 ilmiooutput = os.path.join(script_dir, config.output_path, output_name)
 
 grid = Grid(imieipunti)
