@@ -3,8 +3,8 @@ from config import *
 from out_name import get_output_name
 from grid import Grid
 from mesh import Mesh
-#from projector_parallel import Projector
-from projector import Projector
+from projector_parallel import Projector
+#from projector import Projector
 from import_config import Config
 import time
 
@@ -52,7 +52,7 @@ faces=mesh.getFaces()
 centroids=mesh.getCentroids()
 
 
-
+"""
 projected = Projector(
         grid, 
         vertices, 
@@ -66,8 +66,8 @@ projected = Projector(
         core=core)
 
 iprojected_points, triangle_indices, best_distance = projected.project_ort_points_on_mesh()
+"""
 
-""""
 if __name__=='__main__':
     projected = Projector(
         grid, 
@@ -83,4 +83,3 @@ if __name__=='__main__':
         )
         
     projected_points, triangle_indices, best_distance = projected.project_ort_points_on_mesh()
-""" 

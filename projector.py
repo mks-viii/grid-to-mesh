@@ -291,9 +291,13 @@ class Projector:
 
         print("Filtered.")
 
-        #qui raggruppo per coordiante uguali e filtro solo quello con la soglia minima
-        panda_filtered = panda.loc[panda.groupby(['east', 'north'])['soglia'].idxmin()]    
-        
+
+        # round the result for avoiding floating-point errors
+        # group by and filter
+        panda_filtered = panda.loc[
+            panda.groupby([panda['east'].round(6), panda['north'].round(6)])['soglia'].idxmin()
+        ]
+
         print()
         print("***********************************")
         print("* PROJECTION COMPLETED *")

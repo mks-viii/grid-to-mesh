@@ -27,14 +27,13 @@ class Projector:
         print()
 
     def build_kdtree(self):
-        print("Costruzione KD-tree dei centroidi...")
+        print("Build the KD-tree of the centroids...")
         self.kdtree = cKDTree(self.centroids)
-        print(f"KD-tree costruito con {len(self.centroids)} punti")
+        print(f"KD-tree built using {len(self.centroids)} points")
 
     def is_point_in_triangle_barycentric_2D(self, point, triangle):
         """
-        Verifica se un punto è dentro un triangolo usando coordinate baricentriche in 2D
-        Molto più efficiente e accurato del metodo precedente
+        Check if a point is inside a triangle using 2D barycentric coordinates.
         """
         p = np.array([point[0], point[1]])
         v0 = np.array([triangle[0][0], triangle[0][1]])
@@ -53,19 +52,19 @@ class Projector:
 
         denom = dot00 * dot11 - dot01 * dot01
         
-        #controllo triangolo degenero di area 0
+        #Check for degenerate triangle with zero area
         if abs(denom) < 1e-10:
             return False
         
-        # Calcola coordinate baricentriche
+        #Compute the barycentric coordinates
         inv_denom = 1.0 / (dot00 * dot11 - dot01 * dot01)
         u = (dot11 * dot02 - dot01 * dot12) * inv_denom
         v = (dot00 * dot12 - dot01 * dot02) * inv_denom
         
-        # Verifica se il punto è nel triangolo usando la tolleranza al bordo
+        #Check if the point is inside the triangle using edge tolerance
         return (u >= -self.tolerance) and (v >= -self.tolerance) and (u + v <= 1.0 + self.tolerance)
 
-    #Funzione che trova il bounding box attorno alal griglia
+    # This function search for the bounding box around the grid 
     def compute_bounding_box(self):
         print()
         print("****************************************")
@@ -80,7 +79,7 @@ class Projector:
         max_coords = inner_point + self.buffer
         return min_coords, max_coords
     
-    #Funzione che trova il bounding box attorno ad un punto singolo
+    # This function search for the bounding box around a single point
     def compute_point_bounding_box(self, point):
         mypoint = point
         if mypoint is None or len(mypoint) == 0:
@@ -91,9 +90,7 @@ class Projector:
         max_coords = mypoint + self.radius
         return min_coords, max_coords
 
-    """
-    Filtra i triangoli usando il KD-tree pre-calcolato.
-    """
+    #Filter the triangles using the pre-calculated KD-tree
     def filter_triangles(self, bbox_min, bbox_max):
         center = (bbox_min + bbox_max) / 2
         radius = np.linalg.norm(bbox_max - center) * 2
@@ -101,10 +98,10 @@ class Projector:
         return indices
 
     """
-    A, B, C: punti del piano 
-    point: punto della retta 
-    normalGrid: normale alla griglia 
-    tol: tolleranza numerica per verificare la vicinanza al piano
+    A, B, C: points of the plane
+    point: point for mthe line
+    normalGrid: normal to the grid  
+    tol: tolerance along the border
     """
     @staticmethod
     def intersezione_piano_retta_SYM(triangle, point, normalGrid, tol=1e-12):
@@ -112,27 +109,27 @@ class Projector:
         P0 = point
         v = normalGrid
 
-        # Converte input in oggetti simbolici di SymPy (Coordinata cartesiana 3D)
+        # Convert inputs to SymPy symbolic objects
         A = Matrix(A)
         B = Matrix(B)
         C = Matrix(C)
         P0 = Matrix(P0)
         v = Matrix(v)
 
-        # Calcolo dei vettori del piano
+        # Compute plane vectors
         AB = B - A
         AC = C - A
 
-        # Vettore normale al piano
+        # Plane vector
         n = AB.cross(AC)
-        # Normalizzo il vettore normale
+        # Normalized plane vectors
         n = n.normalized()
 
         denom = n.dot(v)
         if denom == 0:
             return None, None, False
 
-        # Parametro t che definisce la posizione lungo la retta
+        # T defines the position along the line 
         t = n.dot(A - P0) / denom
 
         def proietta_sul_piano(P, A, n):
@@ -140,12 +137,12 @@ class Projector:
             P_proj = P - dist * n
             return P_proj
         
-        # Punto di intersezione
+        # Intersection point
         P = P0 + t * v
 
-        # Cerca sul piano
+        # Search on the plane
         P = proietta_sul_piano(P, A, n)
-        # Verifica la distanza del punto dal pian
+        # Verify the distance between the point an the plane
         dist = abs(n.dot(P - A)) / sqrt(n.dot(n))
 
         if dist < tol:
@@ -156,10 +153,10 @@ class Projector:
     @staticmethod
     def filtro_piano_SYM(triangle, point, normalGrid, tol=1e-12):
         """
-        A, B, C: punti del piano 
-        point: punto della retta 
-        normalGrid: normale alla griglia 
-        tol: tolleranza numerica per verificare la vicinanza al piano
+        A, B, C: points of the plane
+        point: point for mthe line
+        normalGrid: normal to the grid  
+        tol: tolerance along the border
         """
         A, B, C = triangle
         P0 = point
@@ -171,18 +168,18 @@ class Projector:
         P0 = Matrix(P0)
         v = Matrix(v)
 
-        # Calcolo dei vettori del piano
+        # Compute plane vetors
         AB = B - A
         AC = C - A
 
-        # Vettore normale al piano
+        # Normal vector
         n = AB.cross(AC)
         n = n.normalized()
         
-        # Assicurati che P, il punto di intersezione, sia una Matrix
+        # Check P is a matrix
         P = Matrix(point)
         
-        # Verifica la distanza del punto dal piano (proiezione)
+        # Verify the distance between the projected point and the plane
         dist = abs(n.dot(P - A)) / sqrt(n.dot(n))
 
         if dist < tol:
@@ -191,18 +188,19 @@ class Projector:
             return None, dist, False
 
     def process_point(self, t_point):
+        # List for collet the risults
         results = []
         
-        # 4a. BB Locale il punto corrente
+        # 1 Local BB 
         point_bbox_min, point_bbox_max = self.compute_point_bounding_box(t_point)
 
-        # 4b. Filtra triangoli vicini al punto
+        # 2 Filter the nearest triangles to the point
         relevant_triangle_to_point_indices = self.filter_triangles(point_bbox_min, point_bbox_max)
 
-        # 4c. indice globale
+        # 3. Global index
         nearest_indices = relevant_triangle_to_point_indices
 
-        # 4d. PER OGNI TRIANGOLO VICINO
+        # 4 check for each traingle
         for local_index in nearest_indices:
             if len(self.mesh_faces) == 0:
                 continue                                      
@@ -210,13 +208,13 @@ class Projector:
             face = self.mesh_faces[local_index]
             triangle = self.mesh_vertices[face]    
 
-            # Usa il nuovo metodo barycentric ottimizzato
+            # check inside 
             if self.is_point_in_triangle_barycentric_2D(t_point, triangle): 
                 
-                # 4e. INTERSEZIONE retta-piano (proiezione verticale) 
+                # Plane Ray intersection
                 z_interpolated2 = self.intersezione_piano_retta_SYM(triangle, t_point, normalGrid)      
   
-                # z_interpolated2[0] è un SymPy Matrix, devi estrarre il valore numerico
+                # Interpolation
                 if z_interpolated2[2] == False or z_interpolated2[0] is None:
                     continue
 
@@ -225,12 +223,11 @@ class Projector:
                 except (TypeError, IndexError, AttributeError):
                     continue
 
-                # coordinate del punto da proiettare    
+                # Projected coordinate   
                 x= float(z_interpolated2[0][0])
                 y= float(z_interpolated2[0][1])
-                #x, y, _ = t_point
-
-                #punto proiettato
+                
+                # projected point
                 projected_point = np.array([x, y, z_value])
                 
                 filtered = self.filtro_piano_SYM(triangle, projected_point, normalGrid)
@@ -262,24 +259,24 @@ class Projector:
         print("***********************************")
         print()
         
-        # 1 BB globale
+        # 1 Global BBox
         #print("Calcolo bounding box")
         obbox_min, obbox_max = self.compute_bounding_box()
         
         print("Filtro triangoli rilevanti")
         relevant_triangle_indices = self.filter_triangles(obbox_min, obbox_max)
 
-        # 2 PULIZIA DEGLI INDICI (appiattimento e conversione a int) - VETTORIZZATO
+        # 2 Index Clean (flat and itneger conversion)
         flat_indices = [item for sublist in relevant_triangle_indices for item in (sublist if isinstance(sublist, (list, np.ndarray)) else [sublist])]
         relevant_triangle_indices = np.array(flat_indices, dtype=int)
 
-        # 3. ESTRAE LE FACCE RILEVANTI del BB globale
+        # 3. Extract the relevant faces using the global BBox
         self.mesh_faces = self.mesh_faces[relevant_triangle_indices]
 
-        # 4. PARALLELIZZAZIONE
+        # 4. Parallelization
         print(f"\nProiezione di {len(self.points)} punti sulla mesh...")
         
-        # Usa multiprocessing per parallelizzare
+        # Multiprocessing 
         with Pool(self.num_processes) as pool:
             results_list = list(tqdm(
                 pool.imap(self.process_point, self.points),
@@ -290,9 +287,10 @@ class Projector:
                 ncols=100
             ))
 
-        print(f"Risultati prima dell'appiattimento: {len(results_list)}")
-        print(f"Lunghezze singole: {[len(r) if isinstance(r, list) else 1 for r in results_list[:5]]}")
-
+        print(f"Risuls before flatting: {len(results_list)}")
+        print(f"Single length: {[len(r) if isinstance(r, list) else 1 for r in results_list[:5]]}")
+        
+        """"
         # Appiattisci i risultati
         results_list = [item for sublist in results_list for item in sublist]
 
@@ -303,6 +301,12 @@ class Projector:
         if panda.empty:
             print("NESSUN PUNTO PROIETTATO!")
             return pd.DataFrame(), [], []       
+
+        # round the result for avoiding floating-point errors
+        # group by and filter
+        panda_filtered = panda.loc[
+            panda.groupby([panda['east'].round(6), panda['north'].round(6)])['soglia'].idxmin()
+        ]
 
         print("Filtro i risultati ottimali.")
 
@@ -317,15 +321,45 @@ class Projector:
         print()
 
         xyz_data = panda_filtered[['east', 'north', 'height']]
+        """
 
-        print(f"Salvataggio risultati in: {self.output}")
+        # Flat the results (if it's a list of lists)
+        if results_list and isinstance(results_list[0], list):
+            results_list = [item for sublist in results_list for item in sublist]
+
+        print("\nDtaframe creation.")
+        panda = pd.DataFrame(results_list)
+
+        #controllo sul DF
+        if panda.empty:
+            print("NO POINTS PROJECTED!")
+            return pd.DataFrame(), [], []       
+
+        #print("Optimal results filtered.")
+
+        # Round delle coordinate per evitare errori floating-point
+        # Raggruppo per coordinate uguali e filtro solo quello con la soglia minima
+        panda_filtered = panda.loc[
+            panda.groupby([panda['east'].round(6), panda['north'].round(6)])['soglia'].idxmin()
+        ]
+                
+        print()
+        print("***********************************")
+        print("* PROJECTION COMPLETED *")
+        print("***********************************")
+        print(f"Projected points: {len(panda_filtered)}")
+        print()
+
+        xyz_data = panda_filtered[['east', 'north', 'height']]
+
+        print(f"Saving results in: {self.output}")
 
                 # Verifica e crea la directory di output se non esiste
         output_dir = os.path.dirname(self.output)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
-            print(f"Creata directory di output: {output_dir}")
+            print(f"Output directory created: {output_dir}")
 
         xyz_data.to_csv(self.output, index=False, header=False, sep=' ')
         
-        return panda, [], []
+        return xyz_data, [], []
