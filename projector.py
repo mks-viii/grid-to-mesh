@@ -77,7 +77,7 @@ class Projector:
         max_coords = inner_point + self.buffer
         return min_coords, max_coords
     
-    #Funzione che trova il bounding box attorno ad un punto singolo
+    # This function search for the bounding box around a single point
     def compute_point_bounding_box(self, point):
         mypoint = point
         if mypoint is None or len(mypoint) == 0:
