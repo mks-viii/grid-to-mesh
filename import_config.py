@@ -19,8 +19,8 @@ class Config:
             config_path = script_dir / "config.json"
         
         self.config_path = Path(config_path)
-        self._load_config()
-    
+        self._load_config()   
+
     def _load_config(self):
         """Setting up the JSON configuration."""
         try:
@@ -32,6 +32,11 @@ class Config:
             raise ValueError(f"Parsing error in the JSON: {e}")
     
     # ===== PATHS properties =====
+    @property
+    def get_script_dir(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        return script_dir
+
     @property
     def input_folder(self) -> str:
         """Input folder."""

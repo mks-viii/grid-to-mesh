@@ -1,13 +1,9 @@
-from config import normalGrid
-
 import os
 import pandas as pd
 import numpy as np
 from scipy.spatial import cKDTree
 from tqdm import tqdm
 from sympy import Matrix, sqrt
-from multiprocessing import Pool
-from functools import partial
 
 class Projector:
     def __init__(self, grid, vertices, faces, tolerance, buffer, radius, normal, centroids, output, core):
@@ -17,12 +13,12 @@ class Projector:
         self.tolerance = tolerance
         self.buffer = buffer
         self.radius = radius
-        self.normal = normal
+        self.mynormal = normal
         self.centroids = centroids
         self.kdtree = None
         self.build_kdtree()
         self.output=output
-        self.num_processes = core
+        self.core=core
         print()
         print()
 
@@ -35,6 +31,12 @@ class Projector:
         """
         Check if a point is inside a triangle using 2D barycentric coordinates.
         """
+        # Trova l'indice della coordinata non-zero nella normale
+        exclude_axis = np.nonzero(self.mynormal)[0][0]
+        
+        # Usa le altre due coordinate
+        indices = [i for i in range(3) if i != exclude_axis]
+
         p = np.array([point[0], point[1]])
         v0 = np.array([triangle[0][0], triangle[0][1]])
         v1 = np.array([triangle[1][0], triangle[1][1]])
@@ -73,7 +75,7 @@ class Projector:
         print()
         print("Compute Bounding Grid")
         if self.points is None or len(self.points) == 0:
-           raise ValueError("Non ho punti per calcolare il bounding box.")
+           raise ValueError("I dont't have point for calulating the bounding box.")
         inner_point = np.array(self.points)
         min_coords = inner_point - self.buffer
         max_coords = inner_point + self.buffer
@@ -90,6 +92,7 @@ class Projector:
         max_coords = mypoint + self.radius
         return min_coords, max_coords
 
+    
     #Filter the triangles using the pre-calculated KD-tree
     def filter_triangles(self, bbox_min, bbox_max):
         center = (bbox_min + bbox_max) / 2
@@ -127,7 +130,7 @@ class Projector:
 
         denom = n.dot(v)
         if denom == 0:
-            return None, None, False
+            return None, None, False, None
 
         # T defines the position along the line 
         t = n.dot(A - P0) / denom
@@ -146,9 +149,9 @@ class Projector:
         dist = abs(n.dot(P - A)) / sqrt(n.dot(n))
 
         if dist < tol:
-            return P, dist, True
+            return P, dist, True, float(t)
         else:
-            return None, dist, False
+            return None, dist, False, None
 
     @staticmethod
     def filtro_piano_SYM(triangle, point, normalGrid, tol=1e-12):
@@ -159,14 +162,13 @@ class Projector:
         tol: tolerance along the border
         """
         A, B, C = triangle
-        P0 = point
+        P = point
         v = normalGrid
 
         A = Matrix(A)
         B = Matrix(B)
         C = Matrix(C)
-        P0 = Matrix(P0)
-        v = Matrix(v)
+        P = Matrix(P)
 
         # Compute plane vetors
         AB = B - A
@@ -174,10 +176,7 @@ class Projector:
 
         # Normal vector
         n = AB.cross(AC)
-        n = n.normalized()
-        
-        # Check P is a matrix
-        P = Matrix(point)
+        n = n.normalized()      
         
         # Verify the distance between the projected point and the plane
         dist = abs(n.dot(P - A)) / sqrt(n.dot(n))
@@ -186,72 +185,7 @@ class Projector:
             return P, dist, True
         else:
             return None, dist, False
-
-    def process_point(self, t_point):
-        # List for collet the risults
-        results = []
-        
-        # 1 Local BB 
-        point_bbox_min, point_bbox_max = self.compute_point_bounding_box(t_point)
-
-        # 2 Filter the nearest triangles to the point
-        relevant_triangle_to_point_indices = self.filter_triangles(point_bbox_min, point_bbox_max)
-
-        # 3. Global index
-        nearest_indices = relevant_triangle_to_point_indices
-
-        # 4 check for each traingle
-        for local_index in nearest_indices:
-            if len(self.mesh_faces) == 0:
-                continue                                      
-            
-            face = self.mesh_faces[local_index]
-            triangle = self.mesh_vertices[face]    
-
-            # check inside 
-            if self.is_point_in_triangle_barycentric_2D(t_point, triangle): 
-                
-                # Plane Ray intersection
-                z_interpolated2 = self.intersezione_piano_retta_SYM(triangle, t_point, normalGrid)      
-  
-                # Interpolation
-                if z_interpolated2[2] == False or z_interpolated2[0] is None:
-                    continue
-
-                try:
-                    z_value = float(z_interpolated2[0][2])
-                except (TypeError, IndexError, AttributeError):
-                    continue
-
-                # Projected coordinate   
-                x= float(z_interpolated2[0][0])
-                y= float(z_interpolated2[0][1])
-                
-                # projected point
-                projected_point = np.array([x, y, z_value])
-                
-                filtered = self.filtro_piano_SYM(triangle, projected_point, normalGrid)
-                
-                if filtered[2] == False or filtered[0] is None:
-                    continue
-
-                try:
-                    est = float(filtered[0][0])
-                    ovest = float(filtered[0][1])
-                    elev = float(filtered[0][2])
-                    soglia = float(filtered[1])
-                except (TypeError, IndexError, AttributeError):
-                    continue
-                
-                results.append({
-                    'east': est, 
-                    'north': ovest, 
-                    'height': elev, 
-                    'soglia': soglia
-                })
-
-        return results
-
+    
     def project_ort_points_on_mesh(self):
         print()
         print("***********************************")
@@ -259,48 +193,128 @@ class Projector:
         print("***********************************")
         print()
         
-        # 1 Global BBox
-        #print("Calcolo bounding box")
+        # List for collet the risults
+        results_list = []
+
+        # 1 global BB 
+        print("Compute bounding box")
         obbox_min, obbox_max = self.compute_bounding_box()
         
-        print("Filtro triangoli rilevanti")
+        print("Filter relevant triangles")
         relevant_triangle_indices = self.filter_triangles(obbox_min, obbox_max)
 
-        # 2 Index Clean (flat and itneger conversion)
+        # 2 CLEANING OF THE INDICES (flat int cast) - VECTORIZATION
         flat_indices = [item for sublist in relevant_triangle_indices for item in (sublist if isinstance(sublist, (list, np.ndarray)) else [sublist])]
         relevant_triangle_indices = np.array(flat_indices, dtype=int)
 
-        # 3. Extract the relevant faces using the global BBox
-        self.mesh_faces = self.mesh_faces[relevant_triangle_indices]
+        # 3. EXTRACT THE RELEVANT FACES INTO THE GLOBAL BB
+        relevant_faces = self.mesh_faces[relevant_triangle_indices]
 
-        # 4. Parallelization
-        print(f"\nProiezione di {len(self.points)} punti sulla mesh...")
+        # 4. CYCLE THROUGH EACH POINT WITH PROGRESSS BAR
+        print(f"\nProjection of {len(self.points)} points on the mesh...")
         
-        # Multiprocessing 
-        with Pool(self.num_processes) as pool:
-            results_list = list(tqdm(
-                pool.imap(self.process_point, self.points),
-                total=len(self.points),
-                desc="Proiezione punti",
-                unit="pt",
-                colour="green",
-                ncols=100
-            ))
+        # Use tqdm for the progress bar
+        for index, t_point in enumerate(tqdm(self.points, 
+                                              desc="Proiezione punti", 
+                                              unit="pt",
+                                              colour="green",
+                                              ncols=100)):
+           
+            # 4a. LOCAL BB for the actual point
+            point_bbox_min, point_bbox_max = self.compute_point_bounding_box(t_point)
 
-        print(f"Risuls before flatting: {len(results_list)}")
-        print(f"Single length: {[len(r) if isinstance(r, list) else 1 for r in results_list[:5]]}")
-        
-        """"
-        # Appiattisci i risultati
-        results_list = [item for sublist in results_list for item in sublist]
+            # 4b. FILTER THE NEAREST triangles 
+            relevant_triangle_to_point_indices = self.filter_triangles(point_bbox_min, point_bbox_max)
 
-        print("\nCreo il DataFrame risultati.")
+            # 4c. GLOBAL INDICES
+            nearest_indices = relevant_triangle_to_point_indices
+
+            # Lista temporanea per i candidati di questo punto
+            candidates = []
+
+            # 4d. FOR EACH TRIANGLE
+            for local_index in nearest_indices:
+                if len(relevant_faces) == 0:
+                    continue                                      
+                
+                face = self.mesh_faces[local_index]
+                triangle = self.mesh_vertices[face]    
+
+                # use the barycentric method 
+                if self.is_point_in_triangle_barycentric_2D(t_point, triangle): 
+                    
+                    # 4e. Line-plane intersection (vertical projection)
+                    z_interpolated2 = self.intersezione_piano_retta_SYM(triangle, t_point, self.mynormal)      
+                    
+                    # z_interpolated2 ora ha 4 elementi: [punto, distanza, successo, t]
+                    if z_interpolated2[2] == False or z_interpolated2[0] is None:
+                        continue
+
+                    try:
+                        x = float(z_interpolated2[0][0])
+                        y = float(z_interpolated2[0][1])
+                        z_value = float(z_interpolated2[0][2])
+                        t_param = z_interpolated2[3]  # parametro t
+                    except (TypeError, IndexError, AttributeError):
+                        continue
+
+                    # projected coordinates
+                    projected_point = np.array([x, y, z_value])
+                    
+                    """
+                    Apply filter to find only the point lying on the plane of the face
+                    directly below the considered point.
+                    Avoids projection onto adjacent face planes.
+                    """  
+                    filtered = self.filtro_piano_SYM(triangle, projected_point, self.mynormal)
+                    
+                    if filtered[2] == False or filtered[0] is None:
+                        continue
+
+                    try:
+                        est = float(filtered[0][0])
+                        ovest = float(filtered[0][1])
+                        elev = float(filtered[0][2])
+                        soglia = float(filtered[1])
+                        
+                        # Calcola la distanza dal punto originale
+                        distance = np.sqrt((est - t_point[0])**2 + 
+                                         (ovest - t_point[1])**2 + 
+                                         (elev - t_point[2])**2)
+                        
+                        # Aggiungi alla lista dei candidati
+                        candidates.append({
+                            'east': est, 
+                            'north': ovest, 
+                            'height': elev, 
+                            'soglia': soglia,
+                            'distance': distance,
+                            't_param': t_param
+                        })
+                    except (TypeError, IndexError, AttributeError):
+                        continue
+            
+            # Scegli il candidato più vicino per questo punto
+            if candidates:
+                # Ordina per distanza e prendi il più vicino
+                best_candidate = min(candidates, key=lambda c: c['distance'])
+                # Rimuovi i campi extra prima di aggiungere ai risultati
+                results_list.append({
+                    'east': best_candidate['east'],
+                    'north': best_candidate['north'],
+                    'height': best_candidate['height'],
+                    'soglia': best_candidate['soglia']
+                })
+
+        print("\nCreate the results dataframe")
         panda = pd.DataFrame(results_list)
 
         #controllo sul DF
         if panda.empty:
-            print("NESSUN PUNTO PROIETTATO!")
+            print("NO POINT PROJECTED!")
             return pd.DataFrame(), [], []       
+
+        print("Filtered.")
 
         # round the result for avoiding floating-point errors
         # group by and filter
@@ -308,41 +322,6 @@ class Projector:
             panda.groupby([panda['east'].round(6), panda['north'].round(6)])['soglia'].idxmin()
         ]
 
-        print("Filtro i risultati ottimali.")
-
-        #qui raggruppo per coordiante uguali e filtro solo quello con la soglia minima
-        panda_filtered = panda.loc[panda.groupby(['east', 'north'])['soglia'].idxmin()]    
-        
-        print()
-        print("***********************************")
-        print("* PROIEZIONE COMPLETATA *")
-        print("***********************************")
-        print(f"Punti proiettati: {len(panda_filtered)}")
-        print()
-
-        xyz_data = panda_filtered[['east', 'north', 'height']]
-        """
-
-        # Flat the results (if it's a list of lists)
-        if results_list and isinstance(results_list[0], list):
-            results_list = [item for sublist in results_list for item in sublist]
-
-        print("\nDtaframe creation.")
-        panda = pd.DataFrame(results_list)
-
-        #controllo sul DF
-        if panda.empty:
-            print("NO POINTS PROJECTED!")
-            return pd.DataFrame(), [], []       
-
-        #print("Optimal results filtered.")
-
-        # Round delle coordinate per evitare errori floating-point
-        # Raggruppo per coordinate uguali e filtro solo quello con la soglia minima
-        panda_filtered = panda.loc[
-            panda.groupby([panda['east'].round(6), panda['north'].round(6)])['soglia'].idxmin()
-        ]
-                
         print()
         print("***********************************")
         print("* PROJECTION COMPLETED *")
@@ -352,14 +331,13 @@ class Projector:
 
         xyz_data = panda_filtered[['east', 'north', 'height']]
 
-        print(f"Saving results in: {self.output}")
-
-                # Verifica e crea la directory di output se non esiste
+        # Verifica e crea la directory di output se non esiste
         output_dir = os.path.dirname(self.output)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
-            print(f"Output directory created: {output_dir}")
+            print(f"Output folder created: {output_dir}")
 
+        print(f"Output saved in: {self.output}")
         xyz_data.to_csv(self.output, index=False, header=False, sep=' ')
         
-        return xyz_data, [], []
+        return panda, [], []

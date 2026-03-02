@@ -1,5 +1,4 @@
 import os
-from config import *
 from out_name import get_output_name
 from grid import Grid
 from mesh import Mesh
@@ -37,7 +36,7 @@ imieipunti = os.path.join(script_dir, inputFolder, pointName)
 output_name = get_output_name(meshName)
 ilmiooutput = os.path.join(script_dir, outputFolder, output_name)
 """
-
+script_dir=config.get_script_dir
 lamiamesh = config.mesh_path
 imieipunti = config.point_path
 output_name = get_output_name(config.mesh_name)
@@ -51,19 +50,18 @@ vertices=mesh.getVertices()
 faces=mesh.getFaces()
 centroids=mesh.getCentroids()
 
-
 """
 projected = Projector(
         grid, 
         vertices, 
         faces, 
-        tolerance,       
-        buffer=buffer, 
-        radius=radius, 
-        normal=normalGrid,
+        tolerance=config.tolerance,       
+        buffer=config.buffer, 
+        radius=config.radius, 
+        normal=config.normal_grid ,
         centroids=centroids,
         output=ilmiooutput,
-        core=core)
+        core=config.cores)
 
 iprojected_points, triangle_indices, best_distance = projected.project_ort_points_on_mesh()
 """
@@ -73,13 +71,14 @@ if __name__=='__main__':
         grid, 
         vertices, 
         faces, 
-        tolerance,       
-        buffer=buffer, 
-        radius=radius, 
-        normal=normalGrid,
+        tolerance=config.tolerance,       
+        buffer=config.buffer, 
+        radius=config.radius, 
+        normal=config.normal_grid ,
         centroids=centroids,
         output=ilmiooutput,
-        core=core
+        core=config.cores
         )
         
     projected_points, triangle_indices, best_distance = projected.project_ort_points_on_mesh()
+
