@@ -103,6 +103,19 @@ class Config:
         """transform the normal to the griglia as array NumPy."""
         return np.array(self._data["grid"]["normalGrid"])
     
+    # ===== Decimator properties =====
+    @property
+    def preserveboundary(self) -> bool:
+        return self._data["decimator"]["preserveboundary"]
+    
+    @property
+    def preservenormal(self) -> bool:
+        return self._data["decimator"]["preservenormal"]
+    
+    @property
+    def preservetopology(self) -> bool:
+        return self._data["decimator"]["preservetopology"]
+
     # =====  UTILITY =====
     def create_output_folder(self):
         """Create the output folder if it doesn't exist."""
