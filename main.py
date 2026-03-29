@@ -3,71 +3,41 @@ from out_name import get_output_name
 from grid import Grid
 from mesh import Mesh
 from projector_parallel import Projector
-#from projector import Projector
 from import_config import Config
 import time
 import numpy as np
-# Load the configuration file
-config = Config()  # search atomatically the config.json
 
-# Print the configuration
-config.print_config()
-time.sleep(2)  # Pausa dopo caricamento
+if __name__ == '__main__':
 
-# Check the path
-if not config.validate_paths():
-    exit(1)
+    # ── Configurazione ─────────────────────────────────────
+    config = Config()
+    config.print_config()
+    time.sleep(2)
 
-time.sleep(2)  # Pause to read the message
+    if not config.validate_paths():
+        exit(1)
+    time.sleep(2)
 
-# Create the output folder
-config.create_output_folder()
+    config.create_output_folder()
 
-# Variables defined htough config.py
-#print(f"Carico mesh da: {config.mesh_path}")
-#print(f"Carico punti da: {config.point_path}")
-#print(f"Usando {config.cores} cores")
-#print(f"Tolleranza: {config.tolerance}")
-#print(f"Normale griglia: {config.normal_grid}")
+    # ── Path ───────────────────────────────────────────────
+    script_dir   = config.get_script_dir
+    lamiamesh    = config.mesh_path
+    imieipunti   = config.point_path
+    output_name  = get_output_name(config.mesh_name)
+    ilmiooutput  = os.path.join(script_dir, config.output_path, output_name)
 
-""""
-lamiamesh = os.path.join(script_dir, inputFolder, meshName)
-imieipunti = os.path.join(script_dir, inputFolder, pointName)
-output_name = get_output_name(meshName)
-ilmiooutput = os.path.join(script_dir, outputFolder, output_name)
-"""
-script_dir=config.get_script_dir
-lamiamesh = config.mesh_path
-imieipunti = config.point_path
-output_name = get_output_name(config.mesh_name)
-ilmiooutput = os.path.join(script_dir, config.output_path, output_name)
+    # ── Caricamento dati (UNA VOLTA SOLA) ──────────────────
+    grid_obj = Grid(imieipunti)
+    mesh = Mesh(lamiamesh)       # ← eseguito solo dal main
 
-grid = Grid(imieipunti)
-mesh = Mesh(lamiamesh)
+    grid      = grid_obj.getGrid()
+    grid_step = grid_obj.getGridStep()
+    vertices  = mesh.getVertices()
+    faces     = mesh.getFaces()
+    centroids = mesh.getCentroids()
 
-grid=grid.getGrid()
-vertices=mesh.getVertices()
-faces=mesh.getFaces()
-centroids=mesh.getCentroids()
-
-"""
-projected = Projector(
-        grid, 
-        vertices, 
-        faces, 
-        tolerance=config.tolerance,       
-        buffer=config.buffer, 
-        radius=config.radius, 
-        normal=config.normal_grid ,
-        centroids=centroids,
-        output=ilmiooutput,
-        core=config.cores)
-
-iprojected_points, triangle_indices, best_distance = projected.project_ort_points_on_mesh()
-"""
-
-if __name__=='__main__':
-        # ── Misura dimensioni dati ─────────────────────────────────
+    # ── Report dimensioni ──────────────────────────────────
     vertices_gb  = np.array(vertices).nbytes  / (1024**3)
     faces_gb     = np.array(faces).nbytes     / (1024**3)
     centroids_gb = np.array(centroids).nbytes / (1024**3)
@@ -85,19 +55,21 @@ if __name__=='__main__':
           f"{(vertices_gb + faces_gb + centroids_gb) * config.cores:.3f} GB")
     print("=" * 50)
     print()
-    # ──────────────────────────────────────────────────────────
+
+    # ── Proiezione ─────────────────────────────────────────
     projected = Projector(
-        grid, 
-        vertices, 
-        faces, 
-        tolerance=config.tolerance,       
-        buffer=config.buffer, 
-        radius=config.radius, 
-        normal=config.normal_grid ,
+        grid,
+        vertices,
+        faces,
+        tolerance=config.tolerance,
+        buffer=config.buffer,
+        radius=config.radius,
+        normal=config.normal_grid,
         centroids=centroids,
         output=ilmiooutput,
-        core=config.cores
-        )
-        
-    projected_points, triangle_indices, best_distance = projected.project_ort_points_on_mesh()
+        core=config.cores,
+        grid_step=grid_step
+    )
 
+    projected_points, triangle_indices, best_distance = \
+        projected.project_ort_points_on_mesh()
