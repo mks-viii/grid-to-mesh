@@ -93,6 +93,14 @@ class Config:
         return self._data["parameters"]["radius"]
     
     @property
+    def closed_surface(self) -> bool:
+        """
+        True  → sphere, cylinder or closed surfaces (slow, 3D search).
+        False → flat, smooth curved surfaces like terrain (fast, 2D search).
+        """
+        return self._data["parameters"].get("closed_surface", False)
+
+    @property
     def cores(self) -> int:
         """Number of cores for parallelization."""
         return self._data["parameters"]["cores"]
@@ -154,6 +162,7 @@ class Config:
         print(f"☼ Radius:        {self.radius}")
         print(f"☼ Cores:         {self.cores}")
         print(f"☼ Normal grid:   {self.normal_grid}")
+        print(f"☼  Closed surface: {self.closed_surface}")
         print("="*50 + "\n")
 
     def __repr__(self):
