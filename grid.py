@@ -1,11 +1,13 @@
 from plyfile import PlyData
 import numpy as np
+from scipy.spatial import cKDTree
 
 class Grid:
     def __init__(self, grid_file_name):         
         self.grid = grid_file_name
         self.pointsGrid = []
         self.read_xyz()
+        self.step = self._compute_grid_step()
         
     def read_xyz(self):    
         try:
@@ -60,3 +62,25 @@ class Grid:
         normal = normal / np.linalg.norm(normal)
         
         return normal, d
+    
+    def _compute_grid_step(self):
+        """
+        Automatically computes the grid step as the minimum distance between points in 2D.
+        """
+        from scipy.spatial import cKDTree
+        tree = cKDTree(self.pointsGrid[:, :2])     
+        # distanza al secondo punto più vicino (il primo è se stesso)
+        distances, _ = tree.query(self.pointsGrid[:, :2], k=2)
+        step = np.min(distances[:, 1])
+
+        if step < 1e-6:
+            raise ValueError(
+                f"Grid step is {step:.6f} m — too small or zero.\n"
+                f"Check your grid for duplicate or near-duplicate points."
+            )
+
+        print(f"Grid step auto-computed: {step:.4f} m")
+        return step
+    
+    def getGridStep(self):
+        return self.step

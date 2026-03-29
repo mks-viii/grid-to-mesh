@@ -2,7 +2,7 @@ import os
 from out_name import get_output_name
 from grid import Grid
 from mesh import Mesh
-from projector_parallel import Projector
+from projector_parallel import OpenSurfaceProjector, ClosedSurfaceProjector
 from import_config import Config
 import time
 import numpy as np
@@ -56,8 +56,14 @@ if __name__ == '__main__':
     print("=" * 50)
     print()
 
+    # ── Scelta del Projector ────────────────────────────────
+    # config.closed_surface = True  → superficie chiusa (KD-tree 3D)
+    # config.closed_surface = False → superficie aperta (KD-tree 2D)
+    ProjectorClass = ClosedSurfaceProjector if config.closed_surface \
+                     else OpenSurfaceProjector
+    
     # ── Proiezione ─────────────────────────────────────────
-    projected = Projector(
+    projected = ProjectorClass(
         grid,
         vertices,
         faces,
