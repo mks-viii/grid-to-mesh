@@ -3,7 +3,6 @@ from out_name import get_output_name
 from grid import Grid
 from mesh import Mesh
 from projector_parallel import Projector
-#from projector import Projector
 from import_config import Config
 import time
 import numpy as np
@@ -22,13 +21,6 @@ time.sleep(2)  # Pause to read the message
 
 # Create the output folder
 config.create_output_folder()
-
-# Variables defined htough config.py
-#print(f"Carico mesh da: {config.mesh_path}")
-#print(f"Carico punti da: {config.point_path}")
-#print(f"Usando {config.cores} cores")
-#print(f"Tolleranza: {config.tolerance}")
-#print(f"Normale griglia: {config.normal_grid}")
 
 """"
 lamiamesh = os.path.join(script_dir, inputFolder, meshName)
