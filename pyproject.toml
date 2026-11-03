@@ -1,0 +1,28 @@
+[project]
+name = "g2m_projector"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "markgis8",email = "marco.piragnolo@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "plyfile (>=1.1.5,<2.0.0)",
+    "scipy (>=1.18.1,<2.0.0)",
+    "tqdm (>=4.70.1,<5.0.0)",
+    "sympy (>=1.14.0,<2.0.0)",
+    "pandas (>=3.1.0,<4.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "g2m_projector", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.2.0,<10.0.0)"
+]

@@ -1,9 +1,9 @@
 __pycache__
-input_*
-output*
+
+test_env
 
 # Created by venv; see https://docs.python.org/3/library/venv.html
-*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
