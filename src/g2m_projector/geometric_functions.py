@@ -1,7 +1,7 @@
 import numpy as np
 
 # ============================================================
-# FUNZIONI GEOMETRICHE esterne. Necessitano di essere pickle friendly per serializzare gli argomenti e le funzioni da inviare ai processi figli
+# Geometric functions
 # ============================================================
 
 def _is_point_in_triangle_barycentric_2D(point, triangle, tolerance, mynormal):

@@ -32,32 +32,32 @@ class Grid:
         # Calcola la normale al piano usando il metodo dei minimi quadrati
     def getNormalGrid(self):
         """
-        Calcola la normale al piano usando il metodo dei minimi quadrati.
-        Fittiamo un piano: ax + by + cz + d = 0
+        Calculate the normal to the plane using least square
+        Fit a plane: ax + by + cz + d = 0
         
         Returns:
-            normal (numpy.ndarray): Vettore normale al piano (a, b, c) normalizzato
-            d (float): Coefficiente d dell'equazione del piano
+            normal (numpy.ndarray): normal vector  (a, b, c) normalized
+            d (float): Coefficient of the plane equation
         """
         if len(self.pointsGrid) < 3:
-            raise ValueError("Servono almeno 3 punti per calcolare un piano")
+            raise ValueError("I need at least 3 point to calculate the plane")
         
         # Estrai coordinate
         x = self.pointsGrid[:, 0]
         y = self.pointsGrid[:, 1]
         z = self.pointsGrid[:, 2]
         
-        # Costruisci la matrice A per il sistema Ax = b
-        # Risolviamo: z = ax + by + c
+        # Define matrix A for the system  Ax = b
+        # solve: z = ax + by + c
         A = np.c_[x, y, np.ones(len(self.pointsGrid))]
         
-        # Risolvi il sistema ai minimi quadrati
+        # solve the system. Least square 
         coeffs, residuals, rank, s = np.linalg.lstsq(A, z, rcond=None)
         
         a, b, c = coeffs[0], coeffs[1], -1
         d = coeffs[2]
         
-        # Normalizza il vettore normale
+        # Normalized the normal
         normal = np.array([a, b, c])
         normal = normal / np.linalg.norm(normal)
         
@@ -69,7 +69,7 @@ class Grid:
         """
         from scipy.spatial import cKDTree
         tree = cKDTree(self.pointsGrid[:, :2])     
-        # distanza al secondo punto più vicino (il primo è se stesso)
+        # distance to the second colsest point 
         distances, _ = tree.query(self.pointsGrid[:, :2], k=2)
         step = np.min(distances[:, 1])
 

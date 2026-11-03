@@ -29,21 +29,20 @@ class Projector:
 
     def is_point_in_triangle_barycentric_2D(self, point, triangle):
         """
-        Verifica se un punto è dentro un triangolo proiettandolo sul piano
-        perpendicolare alla normale specificata dall'utente.
+        check if the point is contained into the plane projection the normal 
         """
-        # Trova l'indice della coordinata non-zero nella normale
+        # find the index of the coordinate (not zero) on the normal
         non_zero_idx = np.nonzero(self.mynormal)[0]
         
         if len(non_zero_idx) != 1:
-            raise ValueError(f"La normale deve essere lungo un solo asse: {self.mynormal}")
+            raise ValueError(f"The normal shoudl be along one axis: {self.mynormal}")
         
         exclude_axis = non_zero_idx[0]
         
-        # Usa le altre due coordinate (quelle perpendicolari alla normale)
+        # Use the opther two coordinates (perpendicular to the normal)
         indices = [i for i in range(3) if i != exclude_axis]
         
-        # Proietta punto e triangolo sul piano 2D appropriato
+        # Project the point and triangle on the apporpriate 2d plane
         p = np.array([point[indices[0]], point[indices[1]]])
         v0 = np.array([triangle[0][indices[0]], triangle[0][indices[1]]])
         v1 = np.array([triangle[1][indices[0]], triangle[1][indices[1]]])
@@ -92,7 +91,7 @@ class Projector:
     def compute_point_bounding_box(self, point):
         mypoint = point
         if mypoint is None or len(mypoint) == 0:
-            raise ValueError("Non ho punti per calcolare il bounding box.")
+            raise ValueError("I dont't have point for calulating the bounding box.")
 
         mypoint = np.array(mypoint)
         min_coords = mypoint - self.radius
@@ -113,6 +112,7 @@ class Projector:
     normalGrid: normal to the grid  
     tol: tolerance along the border
     """
+
     @staticmethod
     def intersezione_piano_retta_SYM(triangle, point, normalGrid, tol=1e-12):
         A, B, C = triangle
@@ -217,7 +217,7 @@ class Projector:
         # 3. EXTRACT THE RELEVANT FACES INTO THE GLOBAL BB
         relevant_faces = self.mesh_faces[relevant_triangle_indices]
 
-        # Identifica l'asse e la direzione della normale
+        # Identify the normal axis direction 
         normal_axis = np.nonzero(self.mynormal)[0][0]
         normal_direction = np.sign(self.mynormal[normal_axis])
 
@@ -240,7 +240,7 @@ class Projector:
             # 4c. GLOBAL INDICES
             nearest_indices = relevant_triangle_to_point_indices
 
-            # Lista per raccogliere tutti i candidati per questo punto
+            # List to collect all the candidates for this point
             candidates = []
 
             # 4d. FOR EACH TRIANGLE
@@ -271,10 +271,10 @@ class Projector:
                     # projected coordinates
                     projected_point = np.array([x, y, z_value])
                     
-                    # ========== FILTRO PIANO (ESSENZIALE) ==========
+                    # ==========PLANE FILTRER (IMPORTAT) ==========
                     """
-                    Verifica che il punto proiettato giaccia effettivamente 
-                    sul piano del triangolo
+                    Verify that the point is inside the triangle (plane) 
+                    
                     """  
                     filtered = self.filtro_piano_SYM(triangle, projected_point, self.mynormal)
                     
@@ -289,16 +289,16 @@ class Projector:
                     except (TypeError, IndexError, AttributeError):
                         continue
                     
-                    # ========== FILTRO DIREZIONE (NUOVO) ==========
+                    # ========== DIRECTION FILTRO (NEW) ==========
                     
-                    # Calcola la distanza lungo la direzione della normale
+                    # Compute the distance along the normal direction 
                     distance_along_normal = projected_point[normal_axis] - t_point[normal_axis]
                     
-                    # Verifica che la proiezione sia nella direzione corretta della normale
+                    # Check that the projection is done at the correct direction 
                     if normal_direction * distance_along_normal < 0:
                         continue  # Scarta proiezioni nella direzione opposta
                     
-                    # Aggiungi il candidato alla lista
+                    # Add the candidate to the list
                     candidates.append({
                         'east': est,
                         'north': ovest,
@@ -307,11 +307,11 @@ class Projector:
                         'distance': abs(distance_along_normal)
                     })
                     
-                    # ========== FINE FILTRI ==========
+                    # ========== END OF FILTERS ==========
             
-            # Dopo aver controllato tutti i triangoli, seleziona il migliore
+            # chec and select the best triangle 
             if candidates:
-                # Prendi il punto con la distanza minima lungo la normale
+                # Choose the point with the smallest distance 
                 best = min(candidates, key=lambda c: c['distance'])
                 results_list.append({
                     'east': best['east'],
@@ -323,7 +323,7 @@ class Projector:
         print("\nCreate the results dataframe")
         panda = pd.DataFrame(results_list)
 
-        # controllo sul DF
+        # check on the DF
         if panda.empty:
             print("NO POINT PROJECTED!")
             return pd.DataFrame(), [], []       
@@ -345,7 +345,7 @@ class Projector:
 
         xyz_data = panda_filtered[['east', 'north', 'height']]
 
-        # Verifica e crea la directory di output se non esiste
+        # check the output directory or create it if doesn't exist
         output_dir = os.path.dirname(self.output)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)

@@ -1,16 +1,19 @@
-import os
-from out_name import get_output_name
-from grid import Grid
-from mesh import Mesh
-from projector_parallel import OpenSurfaceProjector, ClosedSurfaceProjector
-from import_config import Config
+from pathlib import Path
+from g2m_projector.grid import Grid
+from g2m_projector.mesh import Mesh
+from g2m_projector.projector_parallel import OpenSurfaceProjector, ClosedSurfaceProjector
+from g2m_projector.import_config import Config
 import time
 import numpy as np
 
-if __name__ == '__main__':
 
-    # ── Configurazione ─────────────────────────────────────
-    config = Config()
+def project_grid(config: str | Path, mesh_file: str | Path,
+                 points_file: str | Path, output_dir: str | Path,
+                 output_name: str = "projected_grid"):
+
+    # ── Configuration ─────────────────────────────────────
+    config = Config(Path(config), Path(mesh_file),
+                    Path(points_file), Path(output_dir))
     config.print_config()
     time.sleep(2)
 
@@ -21,15 +24,13 @@ if __name__ == '__main__':
     config.create_output_folder()
 
     # ── Path ───────────────────────────────────────────────
-    script_dir   = config.get_script_dir
-    lamiamesh    = config.mesh_path
-    imieipunti   = config.point_path
-    output_name  = get_output_name(config.mesh_name)
-    ilmiooutput  = os.path.join(script_dir, config.output_path, output_name)
+    lamiamesh   = config.mesh_path
+    imieipunti  = config.point_path
+    ilmiooutput = config.output_path / f"{Path(output_name).stem}.xyz"
 
-    # ── Caricamento dati (UNA VOLTA SOLA) ──────────────────
+    # ── Load the data (ONCE) ──────────────────
     grid_obj = Grid(imieipunti)
-    mesh = Mesh(lamiamesh)       # ← eseguito solo dal main
+    mesh = Mesh(lamiamesh)       
 
     grid      = grid_obj.getGrid()
     grid_step = grid_obj.getGridStep()
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     faces     = mesh.getFaces()
     centroids = mesh.getCentroids()
 
-    # ── Report dimensioni ──────────────────────────────────
+    # ── Report dimension ──────────────────────────────────
     vertices_gb  = np.array(vertices).nbytes  / (1024**3)
     faces_gb     = np.array(faces).nbytes     / (1024**3)
     centroids_gb = np.array(centroids).nbytes / (1024**3)
@@ -46,12 +47,12 @@ if __name__ == '__main__':
     print("=" * 50)
     print("DATA SIZE REPORT")
     print("=" * 50)
-    print(f"mesh_vertices : {vertices_gb:.3f} GB | shape: {np.array(vertices).shape}")
-    print(f"mesh_faces    : {faces_gb:.3f} GB | shape: {np.array(faces).shape}")
-    print(f"centroids     : {centroids_gb:.3f} GB | shape: {np.array(centroids).shape}")
-    print(f"grid points   : {grid_gb:.3f} GB | shape: {np.array(grid).shape}")
-    print(f"Totale dati   : {vertices_gb + faces_gb + centroids_gb + grid_gb:.3f} GB")
-    print(f"Stima con {config.cores} workers : "
+    print(f"Mesh_vertices : {vertices_gb:.3f} GB | shape: {np.array(vertices).shape}")
+    print(f"Mesh_faces    : {faces_gb:.3f} GB | shape: {np.array(faces).shape}")
+    print(f"Centroids     : {centroids_gb:.3f} GB | shape: {np.array(centroids).shape}")
+    print(f"Grid points   : {grid_gb:.3f} GB | shape: {np.array(grid).shape}")
+    print(f"Total data   : {vertices_gb + faces_gb + centroids_gb + grid_gb:.3f} GB")
+    print(f"Estimation using {config.cores} workers : "
           f"{(vertices_gb + faces_gb + centroids_gb) * config.cores:.3f} GB")
     print("=" * 50)
     print()
@@ -61,7 +62,7 @@ if __name__ == '__main__':
     # config.closed_surface = False → superficie aperta (KD-tree 2D)
     ProjectorClass = ClosedSurfaceProjector if config.closed_surface \
                      else OpenSurfaceProjector
-    
+
     # ── Proiezione ─────────────────────────────────────────
     projected = ProjectorClass(
         grid,

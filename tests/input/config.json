@@ -1,0 +1,29 @@
+{
+  "parameters": {
+    "tolerance":0.05,
+    "buffer": 1.0,
+    "radius": 4,
+    "closed_surface": false,
+    "cores": 6
+  },
+  "grid": {
+    "normalGrid": [0.0, 0.0, 1.0]
+  },
+  "decimator": {
+    "preserveboundary":true,
+    "preservenormal":true,
+    "preservetopology":true
+  },  
+  "notes": {
+    "input mesh format": "it is a .ply" ,
+    "input point format": "it is a .xyz" ,
+    "tolerance_info": "4e-1 for high resolution mesh, 10 for a coarse mesh. If the point has been projeced on the opposite side increase the tolerance",
+    "buffer": "Buffer around the bounding box",
+    "radius": "Maximum search distance for finding the nearest triangles to a point. Set the radius according to the distance between the point grid and the mesh surface.",
+    "closed surface": "True -> shpere, cilinder or closed surface (very slow). False -> flat, smooth curved surfaces (fast).",
+    "cores": "Number of cores. Default is 1",
+    "preserveboundary" : "Boolean. Adjust for small circular mesh e.g.g cilinder",
+    "preservenormal" : "Boolean",
+    "preservetopology" : "Boolean"
+  }
+}

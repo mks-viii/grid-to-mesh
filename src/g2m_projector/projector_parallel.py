@@ -6,7 +6,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from geometric_functions import (
+from g2m_projector.geometric_functions import (
     _is_point_in_triangle_barycentric_2D,
     _intersezione_piano_retta_NUM,
     _filtro_piano_NUM,
@@ -79,7 +79,7 @@ def process_point_chunk_closed(args):
     - KD-tree 3D (X, Y, Z) built on all centroids
     - No chunk pre-filtering
     - local_origin for numerical stability
-    - Direct 3D quer
+    - Direct 3D query
     """
     (points_chunk,
      mesh_vertices,
@@ -94,7 +94,7 @@ def process_point_chunk_closed(args):
     centroids_local     = centroids_all  - local_origin
     points_local        = points_chunk   - local_origin
 
-    # KD-tree 3D su tutti i centroidi: X, Y e Z
+    # KD-tree 3D over all centroids: X, Y e Z
     kdtree = cKDTree(centroids_local)
 
     chunk_results = []
@@ -105,7 +105,7 @@ def process_point_chunk_closed(args):
         center          = (point_bbox_min + point_bbox_max) / 2
         search_radius   = np.linalg.norm(point_bbox_max - center) * 2
 
-        # Query 3D diretta su tutti i centroidi
+        # Query the 3d centroids
         nearest_indices = kdtree.query_ball_point(center, search_radius)
 
         candidates = _compute_candidates(
@@ -128,7 +128,7 @@ def process_point_chunk_closed(args):
 
 
 # ============================================================
-# CLASSE BASE
+# BASE CLASS
 # ============================================================
 
 class Projector:
@@ -162,7 +162,7 @@ class Projector:
         print()
 
     # ----------------------------------------------------------
-    # METODI ASTRATTI — obbligatori nelle sottoclassi
+    # ABSTRACT METHODS  —  mandatory for the subclasses
     # ----------------------------------------------------------
 
     def build_kdtree(self):
@@ -178,7 +178,7 @@ class Projector:
         raise NotImplementedError("Implement in the child class")
 
     # ----------------------------------------------------------
-    # METODI COMUNI
+    # COMMON METHODS
     # ----------------------------------------------------------
 
     def _create_chunks(self, points, n_chunks):
@@ -279,9 +279,9 @@ class Projector:
 
     def project_ort_points_on_mesh(self):
         """
-        Metodo principale di proiezione.
-        Uguale per open e closed — le differenze sono
-        incapsulate nei metodi delle sottoclassi.
+        Main projection method.
+        It's the same for open and closed clasees. 
+        Thee differences are in the chidl cleasses.
         """
         print("\n***********************************")
         print("*    PROJECTION POINT ON MESH     *")
@@ -305,12 +305,12 @@ class Projector:
                   f"Y[{bbox_min[1]:.3f} -> {bbox_max[1]:.3f}] "
                   f"Z[{bbox_min[2]:.3f} -> {bbox_max[2]:.3f}]")
 
-        # 3. Costruisce args_list
+        # 3. Costruct args_list
         print("\nPreparing chunks...")
         args_list = self._build_args_list(chunks)
 
         if not args_list:
-            print("⚠️  No chunks to process!")
+            print("T.T No chunks to process!")
             return pd.DataFrame(), [], []
 
         # 4. Esecuzione parallela
@@ -342,7 +342,7 @@ class Projector:
                         chunk_result = future.result()
                         results_list.extend(chunk_result)
                     except Exception as e:
-                        print(f"\n⚠️  Error in chunk {chunk_idx}: {e}")
+                        print(f"\nT.T  Error in chunk {chunk_idx}: {e}")
                     finally:
                         pbar.update(len(chunks[chunk_idx]))
 
@@ -353,7 +353,7 @@ class Projector:
 
 
 # ============================================================
-# SOTTOCLASSE — SUPERFICIE APERTA
+# CHILD CLASS — OPEN SURFACE
 # ============================================================
 
 class OpenSurfaceProjector(Projector):
@@ -384,7 +384,7 @@ class OpenSurfaceProjector(Projector):
 
 
 # ============================================================
-# SOTTOCLASSE — SUPERFICIE CHIUSA
+# CHILD CLASS — CLOSED SURFACE
 # ============================================================
 
 class ClosedSurfaceProjector(Projector):
@@ -397,8 +397,8 @@ class ClosedSurfaceProjector(Projector):
     """
 
     def build_kdtree(self):
-        # Non serve un KD-tree a livello classe per closed surface
-        # perché il worker usa tutti i centroidi globali
+        # don't need a KD-tree for the closed surface
+        # the worker uses all the global centroids
         print("ClosedSurfaceProjector: no class-level KD-tree needed")
         self.kdtree = None
 
