@@ -11,7 +11,7 @@ def test_project_grid():
     project_grid(
         config=TESTS / "input" / "config.json",
         mesh_file=TESTS / "input" / "mesh.ply",
-        points_file=TESTS / "input" / "36PT.xyz",
+        grid_file=TESTS / "input" / "36PT.xyz",
         output_dir=TESTS / "output",
         output_name="projected_grid",
     )

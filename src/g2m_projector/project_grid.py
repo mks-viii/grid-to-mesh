@@ -8,12 +8,12 @@ import numpy as np
 
 
 def project_grid(config: str | Path, mesh_file: str | Path,
-                 points_file: str | Path, output_dir: str | Path,
+                 grid_file: str | Path, output_dir: str | Path,
                  output_name: str = "projected_grid"):
 
     # ── Configuration ─────────────────────────────────────
     config = Config(Path(config), Path(mesh_file),
-                    Path(points_file), Path(output_dir))
+                    Path(grid_file), Path(output_dir))
     config.print_config()
     time.sleep(2)
 

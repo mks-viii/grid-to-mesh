@@ -11,9 +11,7 @@ It works with a single core or multiple cores: specify the number of cores in th
 ## Installation
 
 ```bash
-git clone <repository-url>
-cd grid-to-mesh
-pip install -e .
+pip install git+https://github.com/mks-viii/grid-to-mesh.git
 ```
 
 Requirements: Python `<version>` or later. Main dependencies: `numpy`, `<other libraries>`.
@@ -25,8 +23,9 @@ Requirements: Python `<version>` or later. Main dependencies: `numpy`, `<other l
 3. Run the tool:
 
 ```bash
-python -m grid_to_mesh.main
+python -m grid_to_mesh.project_grid(config, mesh_file, points_file, output_dir, output_name)
 ```
+
 
 The projected points are saved in the output folder, with the suffix `_proj` added to the file name (e.g. `grid.xyz` becomes `grid_proj.xyz`).
 
@@ -55,7 +54,10 @@ The following settings are used by the decimation tool. For the projection you c
 - **preservetopology** (boolean)
 
 ## Example
+An example dataset is available in the `examples/` folder.  To run the example use the run_example.py
 
+
+## Test
 A test dataset is available in the `tests/` folder. To run the tests:
 
 ```bash
@@ -74,4 +76,4 @@ Projected points:
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License Version 2.0. See the [LICENSE](LICENSE) file for details.
