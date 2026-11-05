@@ -1,8 +1,8 @@
-# ── Configure here you path  ─────────────────────────────
+# ── Configure here your path  ─────────────────────────────
 from pathlib import Path
 from grid_to_mesh.project_grid import project_grid
 
-# ── CAMBIA QUI I TUOI PERCORSI ─────────────────────────────
+# ───────────────────────────────────────────────────────────
 CONFIG_FILE = Path("data/config.json")
 MESH_FILE   = Path("data/input/mesh.ply")
 GRID_FILE = Path("data/input/36PT.xyz")

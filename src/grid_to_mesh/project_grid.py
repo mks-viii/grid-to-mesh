@@ -57,13 +57,13 @@ def project_grid(config: str | Path, mesh_file: str | Path,
     print("=" * 50)
     print()
 
-    # ── Scelta del Projector ────────────────────────────────
-    # config.closed_surface = True  → superficie chiusa (KD-tree 3D)
-    # config.closed_surface = False → superficie aperta (KD-tree 2D)
+    # ── Projector ────────────────────────────────
+    # config.closed_surface = True  → closed surface (KD-tree 3D)
+    # config.closed_surface = False → open surface (KD-tree 2D)
     ProjectorClass = ClosedSurfaceProjector if config.closed_surface \
                      else OpenSurfaceProjector
 
-    # ── Proiezione ─────────────────────────────────────────
+    # ── Projection  ─────────────────────────────────────────
     projected = ProjectorClass(
         grid,
         vertices,

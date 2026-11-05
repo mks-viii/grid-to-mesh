@@ -94,7 +94,7 @@ def process_point_chunk_closed(args):
     centroids_local     = centroids_all  - local_origin
     points_local        = points_chunk   - local_origin
 
-    # KD-tree 3D over all centroids: X, Y e Z
+    # KD-tree 3D over all centroids: X, Y, Z
     kdtree = cKDTree(centroids_local)
 
     chunk_results = []
@@ -162,7 +162,7 @@ class Projector:
         print()
 
     # ----------------------------------------------------------
-    # ABSTRACT METHODS  —  mandatory for the subclasses
+    # ABSTRACT METHODS  —  mandatory for the child classes
     # ----------------------------------------------------------
 
     def build_kdtree(self):
@@ -252,7 +252,7 @@ class Projector:
         panda = pd.DataFrame(results_list)
 
         if panda.empty:
-            print("⚠️  NO POINTS PROJECTED!")
+            print("T.T  NO POINTS PROJECTED!")
             return pd.DataFrame(), [], []
 
         panda_filtered = panda.loc[
@@ -280,8 +280,8 @@ class Projector:
     def project_ort_points_on_mesh(self):
         """
         Main projection method.
-        It's the same for open and closed clasees. 
-        Thee differences are in the chidl cleasses.
+        It's the same for open and closed classes. 
+        The differences are in the child classes.
         """
         print("\n***********************************")
         print("*    PROJECTION POINT ON MESH     *")
@@ -313,7 +313,7 @@ class Projector:
             print("T.T No chunks to process!")
             return pd.DataFrame(), [], []
 
-        # 4. Esecuzione parallela
+        # 4. Parallel execution
         worker_fn    = self._get_worker_function()
         results_list = []
 
@@ -348,7 +348,7 @@ class Projector:
 
         print(f"[{time.strftime('%H:%M:%S')}] All workers completed")
 
-        # 5. Salvataggio risultati
+        # 5. Saving
         return self._save_results(results_list)
 
 

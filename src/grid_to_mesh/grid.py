@@ -29,7 +29,7 @@ class Grid:
     def getNGridPt(self):
         return len(self.pointsGrid)
     
-        # Calcola la normale al piano usando il metodo dei minimi quadrati
+    #Calculate the normal to the plane using least square
     def getNormalGrid(self):
         """
         Calculate the normal to the plane using least square
@@ -42,7 +42,7 @@ class Grid:
         if len(self.pointsGrid) < 3:
             raise ValueError("I need at least 3 point to calculate the plane")
         
-        # Estrai coordinate
+        # Extract coordinates
         x = self.pointsGrid[:, 0]
         y = self.pointsGrid[:, 1]
         z = self.pointsGrid[:, 2]

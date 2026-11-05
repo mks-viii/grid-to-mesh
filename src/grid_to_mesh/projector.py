@@ -289,7 +289,7 @@ class Projector:
                     except (TypeError, IndexError, AttributeError):
                         continue
                     
-                    # ========== DIRECTION FILTRO (NEW) ==========
+                    # ========== DIRECTION FILTER (NEW) ==========
                     
                     # Compute the distance along the normal direction 
                     distance_along_normal = projected_point[normal_axis] - t_point[normal_axis]
@@ -309,7 +309,7 @@ class Projector:
                     
                     # ========== END OF FILTERS ==========
             
-            # chec and select the best triangle 
+            # check and select the best triangle 
             if candidates:
                 # Choose the point with the smallest distance 
                 best = min(candidates, key=lambda c: c['distance'])

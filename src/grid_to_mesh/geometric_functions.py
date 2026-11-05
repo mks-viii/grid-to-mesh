@@ -92,7 +92,7 @@ def _filtro_piano_NUM(triangle, point, normalGrid, tol=1e-12):
         return None, float(dist), False
 
 # ============================================================
-# LOGICA DI PROIEZIONE COMUNE
+# COMMON PROJECTION WORKFLOW
 # ============================================================
 
 def _compute_candidates(t_point, nearest_indices,
