@@ -10,12 +10,14 @@ OUTPUT_DIR  = Path("output")
 OUTPUT_NAME = "projected_grid"
 # ───────────────────────────────────────────────────────────
 
-project_grid(
-        config=CONFIG_FILE,
-        mesh_file=MESH_FILE,
-        grid_file=GRID_FILE,
-        output_dir=OUTPUT_DIR,
-        output_name=OUTPUT_NAME,
-   )
+if __name__ == '__main__':
+    
+        project_grid(
+                config=CONFIG_FILE,
+                mesh_file=MESH_FILE,
+                grid_file=GRID_FILE,
+                output_dir=OUTPUT_DIR,
+                output_name=OUTPUT_NAME,
+        )
 
 # ───────────────────────────────────────────────────────────
