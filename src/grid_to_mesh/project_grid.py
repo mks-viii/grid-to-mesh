@@ -1,8 +1,8 @@
 from pathlib import Path
-from g2m_projector.grid import Grid
-from g2m_projector.mesh import Mesh
-from g2m_projector.projector_parallel import OpenSurfaceProjector, ClosedSurfaceProjector
-from g2m_projector.import_config import Config
+from grid_to_mesh.grid import Grid
+from grid_to_mesh.mesh import Mesh
+from grid_to_mesh.projector_parallel import OpenSurfaceProjector, ClosedSurfaceProjector
+from grid_to_mesh.import_config import Config
 import time
 import numpy as np
 

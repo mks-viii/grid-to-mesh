@@ -1,6 +1,6 @@
 # ── Configure here you path  ─────────────────────────────
 from pathlib import Path
-from g2m_projector.project_grid import project_grid
+from grid_to_mesh.project_grid import project_grid
 
 # ── CAMBIA QUI I TUOI PERCORSI ─────────────────────────────
 CONFIG_FILE = Path("data/config.json")

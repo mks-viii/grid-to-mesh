@@ -6,7 +6,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from g2m_projector.geometric_functions import (
+from grid_to_mesh.geometric_functions import (
     _is_point_in_triangle_barycentric_2D,
     _intersezione_piano_retta_NUM,
     _filtro_piano_NUM,

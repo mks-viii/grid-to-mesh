@@ -1,5 +1,5 @@
 [project]
-name = "g2m_projector"
+name = "grid-to-mesh"
 version = "0.1.0"
 description = ""
 authors = [
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "g2m_projector", from = "src"}]
+packages = [{include = "grid_to_mesh", from = "src"}]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
