@@ -26,7 +26,7 @@ class Mesh:
     def precompute_centroids(self):
         print("Pre-computing centroids...")
         self.centroids = np.mean(self.mesh_vertices[self.mesh_faces], axis=1)
-        print(f"Camputed {len(self.centroids)} centroids")
+        print(f"Computed {len(self.centroids)} centroids")
     
     def getCentroids(self):
         return self.centroids

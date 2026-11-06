@@ -29,18 +29,24 @@ class Projector:
 
     def is_point_in_triangle_barycentric_2D(self, point, triangle):
         """
-        Check if a point is inside a triangle using 2D barycentric coordinates.
+        check if the point is contained into the plane projection the normal 
         """
-        # Trova l'indice della coordinata non-zero nella normale
-        exclude_axis = np.nonzero(self.mynormal)[0][0]
+        # find the index of the coordinate (not zero) on the normal
+        non_zero_idx = np.nonzero(self.mynormal)[0]
         
-        # Usa le altre due coordinate
+        if len(non_zero_idx) != 1:
+            raise ValueError(f"The normal shoudl be along one axis: {self.mynormal}")
+        
+        exclude_axis = non_zero_idx[0]
+        
+        # Use the opther two coordinates (perpendicular to the normal)
         indices = [i for i in range(3) if i != exclude_axis]
-
-        p = np.array([point[0], point[1]])
-        v0 = np.array([triangle[0][0], triangle[0][1]])
-        v1 = np.array([triangle[1][0], triangle[1][1]])
-        v2 = np.array([triangle[2][0], triangle[2][1]])
+        
+        # Project the point and triangle on the apporpriate 2d plane
+        p = np.array([point[indices[0]], point[indices[1]]])
+        v0 = np.array([triangle[0][indices[0]], triangle[0][indices[1]]])
+        v1 = np.array([triangle[1][indices[0]], triangle[1][indices[1]]])
+        v2 = np.array([triangle[2][indices[0]], triangle[2][indices[1]]])
         
         v0v1 = v1 - v0
         v0v2 = v2 - v0
@@ -54,16 +60,16 @@ class Projector:
 
         denom = dot00 * dot11 - dot01 * dot01
         
-        #Check for degenerate triangle with zero area
+        # Check for degenerate triangle with zero area
         if abs(denom) < 1e-10:
             return False
         
-        #Compute the barycentric coordinates
-        inv_denom = 1.0 / (dot00 * dot11 - dot01 * dot01)
+        # Compute the barycentric coordinates
+        inv_denom = 1.0 / denom
         u = (dot11 * dot02 - dot01 * dot12) * inv_denom
         v = (dot00 * dot12 - dot01 * dot02) * inv_denom
         
-        #Check if the point is inside the triangle using edge tolerance
+        # Check if the point is inside the triangle using edge tolerance
         return (u >= -self.tolerance) and (v >= -self.tolerance) and (u + v <= 1.0 + self.tolerance)
 
     # This function search for the bounding box around the grid 
@@ -85,7 +91,7 @@ class Projector:
     def compute_point_bounding_box(self, point):
         mypoint = point
         if mypoint is None or len(mypoint) == 0:
-            raise ValueError("Non ho punti per calcolare il bounding box.")
+            raise ValueError("I dont't have point for calulating the bounding box.")
 
         mypoint = np.array(mypoint)
         min_coords = mypoint - self.radius
@@ -93,7 +99,7 @@ class Projector:
         return min_coords, max_coords
 
     
-    #Filter the triangles using the pre-calculated KD-tree
+    # Filter the triangles using the pre-calculated KD-tree
     def filter_triangles(self, bbox_min, bbox_max):
         center = (bbox_min + bbox_max) / 2
         radius = np.linalg.norm(bbox_max - center) * 2
@@ -106,6 +112,7 @@ class Projector:
     normalGrid: normal to the grid  
     tol: tolerance along the border
     """
+
     @staticmethod
     def intersezione_piano_retta_SYM(triangle, point, normalGrid, tol=1e-12):
         A, B, C = triangle
@@ -130,7 +137,7 @@ class Projector:
 
         denom = n.dot(v)
         if denom == 0:
-            return None, None, False, None
+            return None, None, False
 
         # T defines the position along the line 
         t = n.dot(A - P0) / denom
@@ -149,9 +156,9 @@ class Projector:
         dist = abs(n.dot(P - A)) / sqrt(n.dot(n))
 
         if dist < tol:
-            return P, dist, True, float(t)
+            return P, dist, True
         else:
-            return None, dist, False, None
+            return None, dist, False
 
     @staticmethod
     def filtro_piano_SYM(triangle, point, normalGrid, tol=1e-12):
@@ -210,6 +217,10 @@ class Projector:
         # 3. EXTRACT THE RELEVANT FACES INTO THE GLOBAL BB
         relevant_faces = self.mesh_faces[relevant_triangle_indices]
 
+        # Identify the normal axis direction 
+        normal_axis = np.nonzero(self.mynormal)[0][0]
+        normal_direction = np.sign(self.mynormal[normal_axis])
+
         # 4. CYCLE THROUGH EACH POINT WITH PROGRESSS BAR
         print(f"\nProjection of {len(self.points)} points on the mesh...")
         
@@ -229,7 +240,7 @@ class Projector:
             # 4c. GLOBAL INDICES
             nearest_indices = relevant_triangle_to_point_indices
 
-            # Lista temporanea per i candidati di questo punto
+            # List to collect all the candidates for this point
             candidates = []
 
             # 4d. FOR EACH TRIANGLE
@@ -246,7 +257,7 @@ class Projector:
                     # 4e. Line-plane intersection (vertical projection)
                     z_interpolated2 = self.intersezione_piano_retta_SYM(triangle, t_point, self.mynormal)      
                     
-                    # z_interpolated2 ora ha 4 elementi: [punto, distanza, successo, t]
+                    # z_interpolated2[0] is SymPy Matrix, convert to number
                     if z_interpolated2[2] == False or z_interpolated2[0] is None:
                         continue
 
@@ -254,17 +265,16 @@ class Projector:
                         x = float(z_interpolated2[0][0])
                         y = float(z_interpolated2[0][1])
                         z_value = float(z_interpolated2[0][2])
-                        t_param = z_interpolated2[3]  # parametro t
                     except (TypeError, IndexError, AttributeError):
                         continue
 
                     # projected coordinates
                     projected_point = np.array([x, y, z_value])
                     
+                    # ==========PLANE FILTRER (IMPORTAT) ==========
                     """
-                    Apply filter to find only the point lying on the plane of the face
-                    directly below the considered point.
-                    Avoids projection onto adjacent face planes.
+                    Verify that the point is inside the triangle (plane) 
+                    
                     """  
                     filtered = self.filtro_piano_SYM(triangle, projected_point, self.mynormal)
                     
@@ -275,41 +285,45 @@ class Projector:
                         est = float(filtered[0][0])
                         ovest = float(filtered[0][1])
                         elev = float(filtered[0][2])
-                        soglia = float(filtered[1])
-                        
-                        # Calcola la distanza dal punto originale
-                        distance = np.sqrt((est - t_point[0])**2 + 
-                                         (ovest - t_point[1])**2 + 
-                                         (elev - t_point[2])**2)
-                        
-                        # Aggiungi alla lista dei candidati
-                        candidates.append({
-                            'east': est, 
-                            'north': ovest, 
-                            'height': elev, 
-                            'soglia': soglia,
-                            'distance': distance,
-                            't_param': t_param
-                        })
+                        soglia_piano = float(filtered[1])
                     except (TypeError, IndexError, AttributeError):
                         continue
+                    
+                    # ========== DIRECTION FILTER (NEW) ==========
+                    
+                    # Compute the distance along the normal direction 
+                    distance_along_normal = projected_point[normal_axis] - t_point[normal_axis]
+                    
+                    # Check that the projection is done at the correct direction 
+                    if normal_direction * distance_along_normal < 0:
+                        continue  # Scarta proiezioni nella direzione opposta
+                    
+                    # Add the candidate to the list
+                    candidates.append({
+                        'east': est,
+                        'north': ovest,
+                        'height': elev,
+                        'soglia_piano': soglia_piano,
+                        'distance': abs(distance_along_normal)
+                    })
+                    
+                    # ========== END OF FILTERS ==========
             
-            # Scegli il candidato più vicino per questo punto
+            # check and select the best triangle 
             if candidates:
-                # Ordina per distanza e prendi il più vicino
-                best_candidate = min(candidates, key=lambda c: c['distance'])
-                # Rimuovi i campi extra prima di aggiungere ai risultati
+                # Choose the point with the smallest distance 
+                best = min(candidates, key=lambda c: c['distance'])
                 results_list.append({
-                    'east': best_candidate['east'],
-                    'north': best_candidate['north'],
-                    'height': best_candidate['height'],
-                    'soglia': best_candidate['soglia']
+                    'east': best['east'],
+                    'north': best['north'],
+                    'height': best['height'],
+                    'soglia': best['distance']
                 })
 
         print("\nCreate the results dataframe")
         panda = pd.DataFrame(results_list)
 
-        #controllo sul DF
+        # check on the DF
         if panda.empty:
             print("NO POINT PROJECTED!")
             return pd.DataFrame(), [], []       
@@ -331,7 +345,7 @@ class Projector:
 
         xyz_data = panda_filtered[['east', 'north', 'height']]
 
-        # Verifica e crea la directory di output se non esiste
+        # check the output directory or create it if doesn't exist
         output_dir = os.path.dirname(self.output)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -340,4 +354,4 @@ class Projector:
         print(f"Output saved in: {self.output}")
         xyz_data.to_csv(self.output, index=False, header=False, sep=' ')
         
-        return panda, [], []
+        return panda_filtered, [], []
