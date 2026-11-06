@@ -1,6 +1,6 @@
 [project]
 name = "grid-to-mesh"
-version = "0.1.0"
+version = "0.2.0"
 description = "This tool projects a regular grid of points onto mesh surfaces along the grid normal direction."
 authors = [
     {name = "mks-viii",email = "marco.piragnolo@unipd.it"}
