@@ -1,5 +1,5 @@
 from pathlib import Path
-from grid_to_mesh.project_grid import project_grid
+from grid_to_mesh.core import project_grid
 
 TESTS = Path(__file__).resolve().parent
 

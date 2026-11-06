@@ -1,6 +1,6 @@
 # ── Configure here your path  ─────────────────────────────
 from pathlib import Path
-from grid_to_mesh.project_grid import project_grid
+from grid_to_mesh import project_grid
 
 # ───────────────────────────────────────────────────────────
 CONFIG_FILE = Path("data/config.json")

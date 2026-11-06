@@ -22,8 +22,28 @@ Requirements: Python `3.12` or later
 2. Edit `config.json` with the file names and the parameters (see [Configuration](#configuration)).
 3. Run the tool:
 
-```bash
-python -m grid-to-mesh.project_grid(config, mesh_file, points_file, output_dir, output_name)
+```python
+from pathlib import Path
+from grid_to_mesh import project_grid
+
+CONFIG_FILE = Path("data/config.json")
+MESH_FILE   = Path("data/input/mesh.ply")
+GRID_FILE = Path("data/input/36PT.xyz")
+OUTPUT_DIR  = Path("output")
+OUTPUT_NAME = "projected_grid"
+
+
+if __name__ == '__main__':
+    
+        project_grid(
+                config=CONFIG_FILE,
+                mesh_file=MESH_FILE,
+                grid_file=GRID_FILE,
+                output_dir=OUTPUT_DIR,
+                output_name=OUTPUT_NAME,
+        )
+
+
 ```
 
 The sofware will create automatically an 'output folder'. The projected points are saved in the output folder, with the suffix `_proj` added to the file name (e.g. `grid.xyz` becomes `grid_proj.xyz`).
@@ -73,7 +93,7 @@ In the following image, the points of a regular grid (yellow) are projected onto
 A test dataset is available in the `tests/` folder. To run the tests:
 
 ```bash
-pytest -ls
+pytest
 ```
 
 
