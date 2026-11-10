@@ -46,15 +46,15 @@ if __name__ == '__main__':
 
 ```
 
-The sofware will create automatically an 'output folder'. The projected points are saved in the output folder, with the suffix `_proj` added to the file name (e.g. `grid.xyz` becomes `grid_proj.xyz`).
+The software will create automatically an 'output folder'. The projected points are saved in the output folder, with the suffix `_proj` added to the file name (e.g. `grid.xyz` becomes `grid_proj.xyz`).
 
 ## Configuration parameters
 
 The tool computes the mesh bounding box and identifies the triangles contained in it. The parameters you can adjust in `config.json` are:
 
 - **cores**: number of cores used for parallel processing.
-- **buffer**: a buffer around the bounding box to ensure that triangles near the mesh boundaries are included..
-- **radius**: It defines the maximum search distance for finding the nearest triangles to each point. Set the radius according to the distance between the point grid and the mesh surface.
+- **buffer**: a buffer around the bounding box to ensure that triangles near the mesh boundaries are included.
+- **radius**: it defines the maximum search distance for finding the nearest triangles to each point. Set the radius according to the distance between the point grid and the mesh surface.
 - **tolerance**: `4e-1` for a high-resolution meshes, `10` for coarse meshes. If a point is projected onto the wrong side of the mesh, increase the tolerance.
 - **closed_surface**: set to `true` for closed meshes (e.g. spheres, cylinders), which is very slow. Set to `false` for flat or smoothly curved surfaces, which is faster.
 
@@ -99,4 +99,4 @@ pytest
 
 ## License
 
-This project is licensed under the Apache License Version 2.0. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License Version 2.0. See the [LICENSE](LICENSE.txt) file for details.

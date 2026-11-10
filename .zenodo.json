@@ -1,0 +1,30 @@
+{
+    "creators": [
+        {
+            "name": "Piragnolo, Marco",
+            "orcid": "0000-0003-0948-1691",
+            "affiliation": "University of Padova"
+        }
+    ],
+    "title": "grid-to-mesh",
+    "description": "A Python tool that projects a regular grid of points (.xyz) onto a mesh surface (.ply) along the grid normal (nadir) direction. It works with large and small triangles, and supports single-core and multi-core processing.",
+    "version": "0.2.0",
+    "access_right": "open",
+    "related_identifiers": [
+        {
+            "identifier": "https://github.com/mks-viii/grid-to-mesh",
+            "relation": "isSupplementTo",
+            "scheme": "url"
+        }
+    ],
+    "keywords": [
+        "mesh",
+        "point projection",
+        "grid",
+        "triangulated surface",
+        "python"
+    ],
+    "license": "Apache-2.0",
+    "upload_type": "software",
+    "language": "eng"
+}
