@@ -1,4 +1,5 @@
 # grid-to-mesh
+[![DOI](https://zenodo.org/badge/1154363244.svg)](https://doi.org/10.5281/zenodo.24113934)
 
 This tool projects a regular grid of points onto mesh surfaces along the grid normal direction. It works with both large and small triangles, as well as flat and nearly vertical ones.
 

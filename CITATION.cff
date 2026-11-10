@@ -1,12 +1,14 @@
 cff-version: 1.2.0
 title: "grid-to-mesh"
 version: 0.2.0
+doi: 10.5281/zenodo.24113934
 license: "Apache-2.0"
 type: software
 abstract: "A Python tool that projects a regular grid of points (.xyz) onto a mesh surface (.ply) along the grid normal (nadir) direction. It works with large and small triangles, and supports single-core and multi-core processing."
 message: "If you use this software, please cite it as below."
 repository-code: "https://github.com/mks-viii/grid-to-mesh"
 date-released: 2026-10-11
+
 authors:
   - given-names: Marco
     family-names: Piragnolo
